@@ -22,7 +22,7 @@ import java.util.Arrays;
         for(byte l=0;l<9;l++){
           this.possibilities[l]=possibilities[l];
         }
-        this.ref = ref;
+        this.def = def;
         this.instanceFromBeginning = instanceFromBeginning;
       }
       
@@ -91,7 +91,6 @@ import java.util.Arrays;
             hline.lowerNumPos(val);
         }
       }
-      
       void setHLine(Line hline){
         this.hline = hline;
       }
@@ -151,11 +150,13 @@ import java.util.Arrays;
     byte id;
     byte counter;
     int[] numPos = new int[9];
+    boolean errorState;
     
     public Line(byte id){
       this.id = id;
       counter = 0;
       Arrays.fill(numPos, 9);
+      errorState = false;
     }
     public Line( byte id, int[] numPos){ // Only recommended for duplicating
       this.id = id;
@@ -163,6 +164,7 @@ import java.util.Arrays;
         this.numPos[l]=numPos[l];
       }
       counter = 0;
+      errorState = false;
     }
     public byte getId(){
       return id;
@@ -188,7 +190,9 @@ import java.util.Arrays;
     }
     public void lowerNumPos(byte val){
       int amount = --numPos[val-1];
-      if(amount == 1){
+      if(amount == 0){
+        errorState = true;
+      }else if(amount == 1){
         //search that son of a bitch
         for(int i=0;i<9;i++){
           if(cells[i].hasPossibility(val) && !cells[i].isDefinite()){
@@ -219,7 +223,10 @@ import java.util.Arrays;
         }
       }
     }
-//    public void checkFreqPos(){
+    public boolean errorState(){
+      return errorState;
+    }
+    //    public void checkFreqPos(){
 //      int counter=0
 //      byte 
 //      for(byte l=1;l<=9;l++){
@@ -321,6 +328,9 @@ import java.util.Arrays;
         }
       }
     }
+    public void setCellValue(int j, int i, byte val){
+      cells[j][i].setDefiniteSol(val);
+    }
     public void solveSudoku(){
       printSudokuWP();
       //All definite restrict the possibilities of their horizontal line, vertial line and square.
@@ -335,16 +345,59 @@ import java.util.Arrays;
         }
       }
       printSudokuWP();
-      
       if(!finished()){
         //Create alternative universes checking for errors 
-        solveSudokuAlternates()
+        System.out.println("Entering tree of possibilities");
+        solveSudokuAlternates("", "");
       }
+
     }
-    public void solveSudokuAlternates(){
+    public void solveSudokuAlternates(String tree, String treeString){
+      int j=-1;
+      int i=-1;
+      boolean ready = false;
+      while(j<8 && !ready){
+        j++;
+        i=-1;
+        while(i<8){
+          i++;
+          if(!cells[j][i].isDefinite()){
+            ready = true;
+            break;
+          }
+        }
+      }
+
+      SudokuSquare sudsqr;
+      for (byte val=1; val<=9;val++){
+        if(cells[j][i].hasPossibility(val)){
+          sudsqr = duplicate();
+          sudsqr.setCellValue(j, i, val);
+          if(!sudsqr.errorState()){
+            String treeString2 = treeString+tree+"-Value in ["+String.valueOf(j)+", "+String.valueOf(i)+"] was inferred as "+String.valueOf(val)+" resulting in... \n";
+            if(sudsqr.finished()){
+              System.out.print(treeString2);
+              sudsqr.printSudoku();
+            }else{
+              sudsqr.solveSudokuAlternates(tree+"-", treeString2);
+            }
+          }
+          
+        }
+      }
+      /*
       SudokuSquare sudsqr1 = duplicate();
+      System.out.println("-----First iteration-----");
+      sudsqr1.printSudokuWP();
+      sudsqr1.setCellValue(0, 2, (byte) 2);
+      sudsqr1.printSudokuWP();
+
       SudokuSquare sudsqr2 = duplicate();
-      
+      System.out.println("-----Second iteration-----");
+      sudsqr2.printSudokuWP();
+      sudsqr2.setCellValue(0, 2, (byte) 5);
+      sudsqr2.printSudokuWP();
+      */
     }
     public boolean finished(){
       boolean finished=true;
@@ -356,6 +409,16 @@ import java.util.Arrays;
         }
       }
       return finished;
+    }
+    public boolean errorState(){ //Desired a false which means the square has not an error
+      boolean errorState=false;
+      for(byte j=0;j<9;j++){
+        if(hlines[j].errorState() || vlines[j].errorState() || square[j].errorState()){
+          errorState = true;
+          break;
+        }
+      }
+      return errorState;
     }
     public SudokuSquare duplicate(){
       Line[] hlinesA= new Line[9];
