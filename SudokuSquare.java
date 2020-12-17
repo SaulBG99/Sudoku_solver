@@ -35,6 +35,13 @@ import java.util.Arrays;
         setDefinite(val);
         alert();
       }
+      void setDefiniteSolAlt(byte val){
+        for(byte j=1;j<=9;j++){
+          if(j!=val){
+            eliminatePossibility(j);
+          }
+        }
+      }
       void undoubtedlySetDefinite(byte val){
         def = val;
         alert();
@@ -169,6 +176,13 @@ import java.util.Arrays;
     public byte getId(){
       return id;
     }
+    public int getError(){
+      int error=0;
+      for(int j=0;j<9;j++){
+        error +=Math.pow(numPos[j]-1, 2);
+      }
+      return error;
+    }
     public void alertElements(byte val){
       for(int i=0;i<9;i++){
           cells[i].eliminatePossibility(val);
@@ -266,6 +280,13 @@ import java.util.Arrays;
         System.out.print(" | \n");
       }  
     }
+    public void printNumPos(){ //For Debugging
+      System.out.print("|");
+      for(int i=0;i<9;i++){
+          System.out.print(" "+String.valueOf(numPos[i])+" ");
+      }
+      System.out.print("| \n");
+    }
   }
     
     Line[] hlines= new Line[9];
@@ -329,7 +350,7 @@ import java.util.Arrays;
       }
     }
     public void setCellValue(int j, int i, byte val){
-      cells[j][i].setDefiniteSol(val);
+      cells[j][i].setDefiniteSolAlt(val);
     }
     public void solveSudoku(){
       printSudokuWP();
@@ -344,11 +365,16 @@ import java.util.Arrays;
           }
         }
       }
-      printSudokuWP();
+      
       if(!finished()){
+        printSudokuWP();
         //Create alternative universes checking for errors 
         System.out.println("Entering tree of possibilities");
         solveSudokuAlternates("", "");
+      }else{
+        System.out.println();
+        System.out.println("----------------------------");
+        printSudoku();
       }
 
     }
@@ -367,7 +393,6 @@ import java.util.Arrays;
           }
         }
       }
-
       SudokuSquare sudsqr;
       for (byte val=1; val<=9;val++){
         if(cells[j][i].hasPossibility(val)){
@@ -425,16 +450,11 @@ import java.util.Arrays;
       Line[] vlinesA= new Line[9];
       Line[] squareA= new Line[9];
       Cell[][] cellsA= new Cell[9][9];
-      for(byte l=0;l<9;l++){
-        hlinesA[l]=hlines[l].duplicate();
-      }
-      for(byte l=0;l<9;l++){
-        vlinesA[l]=vlines[l].duplicate();
-      }
-      for(byte l=0;l<9;l++){
-        squareA[l]=square[l].duplicate();
-      }
+      
       for(byte j=0;j<9;j++){
+      hlinesA[j]=hlines[j].duplicate();
+      vlinesA[j]=vlines[j].duplicate();
+      squareA[j]=square[j].duplicate();
         for(byte i=0;i<9;i++){
           cellsA[j][i]=cells[j][i].duplicate();
         }
@@ -453,5 +473,27 @@ import java.util.Arrays;
             System.out.println(" -------------------------------------------------------");
         hlines[j].printLineWP();
       }
+    }
+    public void printDebuggingData(){
+      int counter=0;
+      for(byte j=0;j<9;j++){
+        counter+=hlines[j].getError()+vlines[j].getError()+square[j].getError();
+      }
+      System.out.println("The error is "+String.valueOf(counter)+"/0 (0 is ideal)");
+      /*
+      System.out.println("Megadebugging");
+      System.out.println("Horizontal Num Pos (ideal=1)");
+      for(byte j=0;j<9;j++){
+        hlines[j].printNumPos();
+      }
+      System.out.println("Vertical Num Pos (ideal=1)");
+      for(byte j=0;j<9;j++){
+        vlines[j].printNumPos();
+      }
+      System.out.println("Square Num Pos (ideal=1)");
+      for(byte j=0;j<9;j++){
+        square[j].printNumPos();
+      }
+      */
     }
   }
